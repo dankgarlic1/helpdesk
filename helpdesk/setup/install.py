@@ -31,6 +31,7 @@ def after_install():
     create_ticket_feedback_options()
     add_property_setters()
     add_website_settings_permission()
+    add_address_select_permission()
     # Always keep this at last, because sql_ddl makes the db commit
     add_fts_index()
 
@@ -393,3 +394,23 @@ def add_index_if_not_exists(table, column, index_name):
             table=table, index_name=index_name, column=column
         )
     )
+    
+def add_address_select_permission():
+    perm_name = frappe.db.exists("Custom DocPerm", {"parent": "Address", "role": "All"})
+    
+    if not perm_name:
+        frappe.get_doc({
+            "doctype": "Custom DocPerm",
+            "parent": "Address",
+            "parenttype": "DocType",
+            "parentfield": "permissions",
+            "role": "All",
+            "select": 1,
+            "if_owner": 0
+        }).insert(ignore_permissions=True)
+    else:
+        frappe.db.set_value("Custom DocPerm", perm_name, { # If the rule already exists
+            "select": 1,
+            "if_owner": 0
+        })
+            
